@@ -40,6 +40,9 @@ class UnImplementedBox(MixinDictRepr):
 class MovieFragmentBox(MixinDictRepr):
     type = "moof"
 
+class MovieMetadataBox(MixinDictRepr):
+    type = "moov"
+
 
 class BootStrapInfoBox(MixinDictRepr):
     type = "abst"
@@ -132,6 +135,7 @@ class F4VParser(object):
             FragmentRandomAccessBox.type:           cls._parse_afra,
             MediaDataBox.type:                      cls._parse_mdat,
             MovieFragmentBox.type:                  cls._parse_moof,
+            MovieMetadataBox.type:                  cls._parse_moov,
             MovieFragmentHeader.type:               cls._parse_mfhd,
             ProtectionSystemSpecificHeader.type:    cls._parse_pssh
         }
@@ -333,6 +337,18 @@ class F4VParser(object):
             setattr(moof, child_box.type, child_box)
 
         return moof
+
+    @classmethod
+    def _parse_moov(cls, bootstrap_bs, header):
+        moov = MovieMetadataBox()
+        moov.header = header
+
+        box_bs = bootstrap_bs.read(moov.header.box_size * 8)
+
+        for child_box in cls.parse(bytes_input=box_bs.bytes):
+            setattr(moov, child_box.type, child_box)
+
+        return moov
 
     @classmethod
     def _parse_mfhd(cls, bootstrap_bs, header):
